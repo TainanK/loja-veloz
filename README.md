@@ -107,4 +107,4 @@ loja-veloz/
 
 ## Video
 
-link:
+link: https://github.com/TainanK/loja-veloz
