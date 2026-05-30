@@ -1,0 +1,105 @@
+version: "3.9"
+
+networks:
+  lojaveloz-net:
+    driver: bridge
+
+volumes:
+  postgres-data:
+
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: lojaveloz-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-lojaveloz}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - lojaveloz-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pedidos:
+    build:
+      context: ./services/pedidos
+      dockerfile: Dockerfile
+    container_name: lojaveloz-pedidos
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@db:5432/${POSTGRES_DB:-lojaveloz}
+    ports:
+      - "8001:8001"
+    networks:
+      - lojaveloz-net
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  pagamentos:
+    build:
+      context: ./services/pagamentos
+      dockerfile: Dockerfile
+    container_name: lojaveloz-pagamentos
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    networks:
+      - lojaveloz-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  estoque:
+    build:
+      context: ./services/estoque
+      dockerfile: Dockerfile
+    container_name: lojaveloz-estoque
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+    networks:
+      - lojaveloz-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8003/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: lojaveloz-gateway
+    restart: unless-stopped
+    environment:
+      PEDIDOS_URL: http://pedidos:8001
+      PAGAMENTOS_URL: http://pagamentos:8002
+      ESTOQUE_URL: http://estoque:8003
+    ports:
+      - "8000:8000"
+    networks:
+      - lojaveloz-net
+    depends_on:
+      - pedidos
+      - pagamentos
+      - estoque
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3

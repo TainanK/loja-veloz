@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: lojaveloz-config
+  namespace: lojaveloz
+data:
+  PEDIDOS_URL: "http://pedidos-svc:8001"
+  PAGAMENTOS_URL: "http://pagamentos-svc:8002"
+  ESTOQUE_URL: "http://estoque-svc:8003"
+  POSTGRES_DB: "lojaveloz"

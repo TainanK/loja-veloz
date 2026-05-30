@@ -1,0 +1,51 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway-svc
+  namespace: lojaveloz
+spec:
+  selector:
+    app: api-gateway
+  type: LoadBalancer
+  ports:
+    - port: 80
+      targetPort: 8000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pedidos-svc
+  namespace: lojaveloz
+spec:
+  selector:
+    app: pedidos
+  type: ClusterIP
+  ports:
+    - port: 8001
+      targetPort: 8001
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pagamentos-svc
+  namespace: lojaveloz
+spec:
+  selector:
+    app: pagamentos
+  type: ClusterIP
+  ports:
+    - port: 8002
+      targetPort: 8002
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: estoque-svc
+  namespace: lojaveloz
+spec:
+  selector:
+    app: estoque
+  type: ClusterIP
+  ports:
+    - port: 8003
+      targetPort: 8003
